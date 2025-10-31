@@ -1,0 +1,85 @@
+---
+# PLAY 1: INSTALLATION ONLY
+- name: Install packages on web servers
+  hosts: web_servers
+  become: yes
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Ensure Nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Create web directory
+      file:
+        path: /var/www/html
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+- name: Install packages on app server
+  hosts: app_servers
+  become: yes
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Python and basic packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - python3
+        - python3-pip
+        - nginx
+        - git
+
+    - name: Ensure Nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Create web directory
+      file:
+        path: /var/www/html
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+# PLAY 2: DEPLOYMENT ONLY
+- name: Deploy static content to web servers
+  hosts: web_servers
+  become: yes
+  tasks:
+    - name: Deploy static index.html from files directory
+      copy:
+        src: files/index.html
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+- name: Deploy static content to app server
+  hosts: app_servers
+  become: yes
+  tasks:
+    - name: Deploy app index.html from files directory
+      copy:
+        src: files/app-index.html
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'

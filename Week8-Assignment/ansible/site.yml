@@ -1,0 +1,57 @@
+---
+- name: Configure web servers for static content
+  hosts: web_servers
+  become: yes
+  roles:
+    - webserver
+
+- name: Configure application server
+  hosts: app_servers
+  become: yes
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Python and basic packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - python3
+        - python3-pip
+        - nginx
+        - git
+
+    - name: Ensure Nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Create web directory
+      file:
+        path: /var/www/html
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Deploy static page to app server
+      copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>App Server - Assignment 35</title>
+          </head>
+          <body>
+              <h1>Application Server</h1>
+              <p>This is the application server configured with Ansible multi-play setup.</p>
+              <p>Host: {{ inventory_hostname }}</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'

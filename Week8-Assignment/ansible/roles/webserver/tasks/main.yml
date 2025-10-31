@@ -1,0 +1,42 @@
+---
+- name: Update apt package cache
+  apt:
+    update_cache: yes
+
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+
+- name: Ensure Nginx is running
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Create web directory
+  file:
+    path: /var/www/html
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Deploy static index.html
+  copy:
+    content: |
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>Welcome to Assignment 35</title>
+      </head>
+      <body>
+          <h1>Successfully deployed with Ansible!</h1>
+          <p>Host: {{ inventory_hostname }}</p>
+          <p>This is a static web page deployed using Ansible multi-play setup.</p>
+      </body>
+      </html>
+    dest: /var/www/html/index.html
+    owner: www-data
+    group: www-data
+    mode: '0644'
